@@ -10,11 +10,15 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('Simple 2D Platformer')
 
 # Colors
-BLACK = (0, 0, 0)
+BACKGROUND_COLOR = (30, 30, 30)
 WHITE = (255, 255, 255)
-BLUE = (0, 0, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
+BLACK = (0, 0, 0)
+PLAYER_COLOR = (70, 130, 180)
+PLATFORM_COLOR = (169, 169, 169)
+DEADLY_PLATFORM_COLOR = (220, 20, 60)
+BUTTON_COLOR = (34, 139, 34)
+BUTTON_HOVER_COLOR = (50, 205, 50)
+TEXT_COLOR = (255, 255, 255)
 
 # Player settings
 player_size = (50, 50)
@@ -46,6 +50,9 @@ def reset_game():
     player_velocity_y = 0
     on_ground = False
     dead = False
+
+def draw_rounded_rect(surface, color, rect, radius):
+    pygame.draw.rect(surface, color, rect, border_radius=radius)
 
 while running:
     for event in pygame.event.get():
@@ -102,34 +109,35 @@ while running:
                     player_velocity_y = 0
 
     # Draw everything
-    screen.fill(BLACK)
+    screen.fill(BACKGROUND_COLOR)
 
     if dead:
         # Display "You Died" message
         font = pygame.font.SysFont(None, 55)
-        text = font.render("You Died", True, WHITE)
+        text = font.render("You Died", True, TEXT_COLOR)
         screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, SCREEN_HEIGHT // 2 - text.get_height() // 2 - 50))
 
         # Render "Replay" button
         replay_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2, 200, 50)
-        pygame.draw.rect(screen, GREEN, replay_button)
+        pygame.draw.rect(screen, BUTTON_COLOR, replay_button, border_radius=10)
         replay_text = font.render("Replay", True, BLACK)
-        screen.blit(replay_text, (replay_button.x + replay_button.width // 2 - replay_text.get_width() // 2, replay_button.y + replay_button.height // 2 - replay_text.get_height() // 2))
+        screen.blit(replay_text, (replay_button.x + replay_button.width // 2 - replay_text.get_width() // 2, replay_button.y + replay_text.get_height() // 2))
 
         # Render "Exit" button
         exit_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 60, 200, 50)
-        pygame.draw.rect(screen, RED, exit_button)
+        pygame.draw.rect(screen, BUTTON_COLOR, exit_button, border_radius=10)
         exit_text = font.render("Exit", True, BLACK)
-        screen.blit(exit_text, (exit_button.x + exit_button.width // 2 - exit_text.get_width() // 2, exit_button.y + exit_button.height // 2 - exit_text.get_height() // 2))
+        screen.blit(exit_text, (exit_button.x + exit_button.width // 2 - exit_text.get_width() // 2, exit_button.y + exit_text.get_height() // 2))
     else:
-        pygame.draw.rect(screen, BLUE, player)
+        # Draw player as a circle
+        pygame.draw.ellipse(screen, PLAYER_COLOR, player)
 
     for platform in platforms:
         if platform == platforms[1]:
-            pygame.draw.rect(screen, RED, platform)
+            draw_rounded_rect(screen, DEADLY_PLATFORM_COLOR, platform, 10)
         else:
-            pygame.draw.rect(screen, WHITE, platform)
-            
+            draw_rounded_rect(screen, PLATFORM_COLOR, platform, 10)
+    
     pygame.display.flip()
 
     # Cap the frame rate
