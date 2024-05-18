@@ -26,11 +26,12 @@ player_start_pos = (100, 100)
 player = pygame.Rect(*player_start_pos, *player_size)
 player_speed = 5
 player_gravity = 0.5
-player_jump_speed = -10
+player_jump_speed = -15  # Increase jump height
 player_velocity_x = 0
 player_velocity_y = 0
 on_ground = False
 dead = False
+game_started = False
 
 # Platforms
 platforms = [
@@ -44,12 +45,13 @@ running = True
 clock = pygame.time.Clock()
 
 def reset_game():
-    global player, player_velocity_x, player_velocity_y, on_ground, dead
+    global player, player_velocity_x, player_velocity_y, on_ground, dead, game_started
     player = pygame.Rect(*player_start_pos, *player_size)
     player_velocity_x = 0
     player_velocity_y = 0
     on_ground = False
     dead = False
+    game_started = False
 
 def draw_rounded_rect(surface, color, rect, radius):
     pygame.draw.rect(surface, color, rect, border_radius=radius)
@@ -73,40 +75,45 @@ while running:
         # Get the keys pressed
         keys = pygame.key.get_pressed()
 
-        # Player horizontal movement
-        if keys[pygame.K_LEFT]:
-            player_velocity_x = -player_speed
-        elif keys[pygame.K_RIGHT]:
-            player_velocity_x = player_speed
-        else:
-            player_velocity_x = 0  # Stop horizontal movement if no key is pressed
+        # Start the game on first move
+        if not game_started and (keys[pygame.K_w] or keys[pygame.K_d]):
+            game_started = True
 
-        # Player jumping
-        if keys[pygame.K_SPACE] and on_ground:
-            player_velocity_y = player_jump_speed
+        if game_started:
+            # Player horizontal movement
+            if keys[pygame.K_LEFT]:
+                player_velocity_x = -player_speed
+            elif keys[pygame.K_RIGHT]:
+                player_velocity_x = player_speed
+            else:
+                player_velocity_x = 0  # Stop horizontal movement if no key is pressed
+
+            # Player jumping
+            if keys[pygame.K_SPACE] and on_ground:
+                player_velocity_y = player_jump_speed
+                on_ground = False
+
+            # Apply gravity
+            player_velocity_y += player_gravity
+
+            # Update player position
+            player.x += player_velocity_x
+            player.y += player_velocity_y
+
+            # Check for collisions and update player position
             on_ground = False
-
-        # Apply gravity
-        player_velocity_y += player_gravity
-
-        # Update player position
-        player.x += player_velocity_x
-        player.y += player_velocity_y
-
-        # Check for collisions and update player position
-        on_ground = False
-        for platform in platforms:
-            if player.colliderect(platform):
-                if platform == platforms[1]:  # Deadly platform
-                    dead = True
-                    break
-                if player_velocity_y > 0 and player.bottom <= platform.bottom:
-                    player.bottom = platform.top
-                    player_velocity_y = 0
-                    on_ground = True
-                elif player_velocity_y < 0 and player.top >= platform.top:
-                    player.top = platform.bottom
-                    player_velocity_y = 0
+            for platform in platforms:
+                if player.colliderect(platform):
+                    if platform == platforms[1]:  # Deadly platform
+                        dead = True
+                        break
+                    if player_velocity_y > 0 and player.bottom <= platform.bottom:
+                        player.bottom = platform.top
+                        player_velocity_y = 0
+                        on_ground = True
+                    elif player_velocity_y < 0 and player.top >= platform.top:
+                        player.top = platform.bottom
+                        player_velocity_y = 0
 
     # Draw everything
     screen.fill(BACKGROUND_COLOR)
@@ -132,12 +139,19 @@ while running:
         # Draw player as a circle
         pygame.draw.ellipse(screen, PLAYER_COLOR, player)
 
-    for platform in platforms:
-        if platform == platforms[1]:
-            draw_rounded_rect(screen, DEADLY_PLATFORM_COLOR, platform, 10)
-        else:
-            draw_rounded_rect(screen, PLATFORM_COLOR, platform, 10)
-    
+        # Draw platforms
+        for platform in platforms:
+            if platform == platforms[1]:
+                draw_rounded_rect(screen, DEADLY_PLATFORM_COLOR, platform, 10)
+            else:
+                draw_rounded_rect(screen, PLATFORM_COLOR, platform, 10)
+
+        # Display start text if the game hasn't started yet
+        if not game_started:
+            font = pygame.font.SysFont(None, 40)
+            start_text = font.render("Press W or D to start", True, TEXT_COLOR)
+            screen.blit(start_text, (SCREEN_WIDTH // 2 - start_text.get_width() // 2, SCREEN_HEIGHT // 2 - start_text.get_height() // 2 - 150))
+
     pygame.display.flip()
 
     # Cap the frame rate
