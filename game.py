@@ -36,8 +36,10 @@ game_started = False
 # Platforms
 platforms = [
     pygame.Rect(0, 550, 800, 50),   # Ground platform
-    pygame.Rect(200, 400, 200, 20), # Deadly platform
-    pygame.Rect(500, 300, 200, 20)  # Floating platform
+    pygame.Rect(150, 450, 200, 20), # Left safe platform
+    pygame.Rect(400, 450, 200, 20), # Deadly platform in the middle
+    pygame.Rect(650, 450, 200, 20), # Right safe platform
+    pygame.Rect(475, 350, 50, 20)   # Small platform above the deadly platform
 ]
 
 # Main game loop
@@ -76,7 +78,7 @@ while running:
         keys = pygame.key.get_pressed()
 
         # Start the game on first move
-        if not game_started and (keys[pygame.K_w] or keys[pygame.K_d]):
+        if not game_started and (keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]):
             game_started = True
 
         if game_started:
@@ -104,7 +106,7 @@ while running:
             on_ground = False
             for platform in platforms:
                 if player.colliderect(platform):
-                    if platform == platforms[1]:  # Deadly platform
+                    if platform == platforms[2]:  # Deadly platform
                         dead = True
                         break
                     if player_velocity_y > 0 and player.bottom <= platform.bottom:
@@ -140,8 +142,8 @@ while running:
         pygame.draw.ellipse(screen, PLAYER_COLOR, player)
 
         # Draw platforms
-        for platform in platforms:
-            if platform == platforms[1]:
+        for i, platform in enumerate(platforms):
+            if platform == platforms[2]:  # Deadly platform
                 draw_rounded_rect(screen, DEADLY_PLATFORM_COLOR, platform, 10)
             else:
                 draw_rounded_rect(screen, PLATFORM_COLOR, platform, 10)
@@ -149,7 +151,7 @@ while running:
         # Display start text if the game hasn't started yet
         if not game_started:
             font = pygame.font.SysFont(None, 40)
-            start_text = font.render("Press W or D to start", True, TEXT_COLOR)
+            start_text = font.render("Press LEFT or RIGHT arrow key to start", True, TEXT_COLOR)
             screen.blit(start_text, (SCREEN_WIDTH // 2 - start_text.get_width() // 2, SCREEN_HEIGHT // 2 - start_text.get_height() // 2 - 150))
 
     pygame.display.flip()
