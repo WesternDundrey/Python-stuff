@@ -12,6 +12,7 @@ SCREEN_HEIGHT = 600
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
+RED = (255, 0, 0)
 
 # Player settings
 PLAYER_WIDTH = 50
@@ -23,6 +24,11 @@ PLATFORM_COLOR = WHITE
 PLATFORM_WIDTH = 100
 PLATFORM_HEIGHT = 20
 
+# Pole settings
+POLE_WIDTH = 10
+POLE_HEIGHT = 100
+POLE_COLOR = RED
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -30,15 +36,25 @@ class Player(pygame.sprite.Sprite):
         self.image.fill(PLAYER_COLOR)
         self.rect = self.image.get_rect()
         self.rect.x = SCREEN_WIDTH // 2
-        self.rect.y = SCREEN_HEIGHT - PLAYER_HEIGHT
+        self.rect.y = SCREEN_HEIGHT - PLAYER_HEIGHT - PLATFORM_HEIGHT
         self.change_y = 0
         self.jump_power = 10
+        self.gravity = 0.5
 
     def update(self):
+        self.calc_gravity()
         self.rect.y += self.change_y
+        
+        # Check if player is on the ground
         if self.rect.y >= SCREEN_HEIGHT - PLAYER_HEIGHT:
             self.rect.y = SCREEN_HEIGHT - PLAYER_HEIGHT
             self.change_y = 0
+
+    def calc_gravity(self):
+        if self.change_y == 0:
+            self.change_y = 1
+        else:
+            self.change_y += self.gravity
 
     def jump(self):
         self.change_y = -self.jump_power
@@ -52,9 +68,18 @@ class Platform(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+class Pole(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height):
+        super().__init__()
+        self.image = pygame.Surface([width, height])
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
 def create_platforms(level):
     platforms = pygame.sprite.Group()
-    num_platforms = random.randint(5, 10)
+    num_platforms = random.randint(1, 4)
     for _ in range(num_platforms):
         width = random.randint(50, 150)
         height = PLATFORM_HEIGHT
@@ -75,7 +100,10 @@ def main():
     level = 1
     platforms = create_platforms(level)
     all_sprites.add(platforms)
-
+    
+    pole = Pole(SCREEN_WIDTH - POLE_WIDTH, SCREEN_HEIGHT - POLE_HEIGHT - PLATFORM_HEIGHT, POLE_WIDTH, POLE_HEIGHT)
+    all_sprites.add(pole)
+    
     clock = pygame.time.Clock()
     running = True
 
@@ -89,16 +117,25 @@ def main():
 
         all_sprites.update()
 
-        # Check if player reaches the bottom of the screen
-        if player.rect.y >= SCREEN_HEIGHT - PLAYER_HEIGHT:
+        # Check for collision with platforms
+        if pygame.sprite.spritecollide(player, platforms, False):
+            player.change_y = 0
+            player.rect.y = min([p.rect.top for p in platforms if player.rect.colliderect(p.rect)]) - PLAYER_HEIGHT
+
+        # Check if player reaches the right edge of the screen or the pole
+        if player.rect.right >= SCREEN_WIDTH or pygame.sprite.collide_rect(player, pole):
             level += 1
             player.jump_power += 1
             platforms = create_platforms(level)
             all_sprites = pygame.sprite.Group()
             all_sprites.add(player)
             all_sprites.add(platforms)
-            player.rect.y = 0
+            pole = Pole(SCREEN_WIDTH - POLE_WIDTH, SCREEN_HEIGHT - POLE_HEIGHT - PLATFORM_HEIGHT, POLE_WIDTH, POLE_HEIGHT)
+            all_sprites.add(pole)
+            player.rect.x = 0  # Reset player's position to the start
+            player.rect.y = SCREEN_HEIGHT - PLAYER_HEIGHT - PLATFORM_HEIGHT
 
+        # Draw everything
         screen.fill(BLACK)
         all_sprites.draw(screen)
         pygame.display.flip()
@@ -109,3 +146,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+           
