@@ -30,25 +30,30 @@ POLE_HEIGHT = 100
 POLE_COLOR = RED
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, platforms):
         super().__init__()
         self.image = pygame.Surface([PLAYER_WIDTH, PLAYER_HEIGHT])
         self.image.fill(PLAYER_COLOR)
         self.rect = self.image.get_rect()
-        self.rect.x = SCREEN_WIDTH // 2
-        self.rect.y = SCREEN_HEIGHT - PLAYER_HEIGHT - PLATFORM_HEIGHT
+        # Start on a random platform
+        start_platform = random.choice(platforms.sprites())
+        self.rect.x = start_platform.rect.x + (start_platform.rect.width - PLAYER_WIDTH) // 2
+        self.rect.y = start_platform.rect.y - PLAYER_HEIGHT
         self.change_y = 0
+        self.change_x = 0
         self.jump_power = 10
         self.gravity = 0.5
 
     def update(self):
         self.calc_gravity()
+        self.rect.x += self.change_x
         self.rect.y += self.change_y
-        
-        # Check if player is on the ground
-        if self.rect.y >= SCREEN_HEIGHT - PLAYER_HEIGHT:
-            self.rect.y = SCREEN_HEIGHT - PLAYER_HEIGHT
-            self.change_y = 0
+
+        # Prevent moving out of the screen
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > SCREEN_WIDTH:
+            self.rect.right = SCREEN_WIDTH
 
     def calc_gravity(self):
         if self.change_y == 0:
@@ -58,6 +63,15 @@ class Player(pygame.sprite.Sprite):
 
     def jump(self):
         self.change_y = -self.jump_power
+
+    def move_left(self):
+        self.change_x = -5
+
+    def move_right(self):
+        self.change_x = 5
+
+    def stop(self):
+        self.change_x = 0
 
 class Platform(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
@@ -79,7 +93,7 @@ class Pole(pygame.sprite.Sprite):
 
 def create_platforms(level):
     platforms = pygame.sprite.Group()
-    num_platforms = random.randint(1, 4)
+    num_platforms = 4  # Always create 4 platforms
     for _ in range(num_platforms):
         width = random.randint(50, 150)
         height = PLATFORM_HEIGHT
@@ -93,17 +107,17 @@ def main():
     screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
     pygame.display.set_caption("Platformer Game")
 
-    player = Player()
-    all_sprites = pygame.sprite.Group()
-    all_sprites.add(player)
-
     level = 1
     platforms = create_platforms(level)
+    player = Player(platforms)
+
+    all_sprites = pygame.sprite.Group()
+    all_sprites.add(player)
     all_sprites.add(platforms)
-    
+
     pole = Pole(SCREEN_WIDTH - POLE_WIDTH, SCREEN_HEIGHT - POLE_HEIGHT - PLATFORM_HEIGHT, POLE_WIDTH, POLE_HEIGHT)
     all_sprites.add(pole)
-    
+
     clock = pygame.time.Clock()
     running = True
 
@@ -114,6 +128,15 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     player.jump()
+                if event.key == pygame.K_LEFT:
+                    player.move_left()
+                if event.key == pygame.K_RIGHT:
+                    player.move_right()
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT and player.change_x < 0:
+                    player.stop()
+                if event.key == pygame.K_RIGHT and player.change_x > 0:
+                    player.stop()
 
         all_sprites.update()
 
@@ -127,13 +150,12 @@ def main():
             level += 1
             player.jump_power += 1
             platforms = create_platforms(level)
+            player = Player(platforms)
             all_sprites = pygame.sprite.Group()
             all_sprites.add(player)
             all_sprites.add(platforms)
             pole = Pole(SCREEN_WIDTH - POLE_WIDTH, SCREEN_HEIGHT - POLE_HEIGHT - PLATFORM_HEIGHT, POLE_WIDTH, POLE_HEIGHT)
             all_sprites.add(pole)
-            player.rect.x = 0  # Reset player's position to the start
-            player.rect.y = SCREEN_HEIGHT - PLAYER_HEIGHT - PLATFORM_HEIGHT
 
         # Draw everything
         screen.fill(BLACK)
@@ -146,4 +168,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-           
