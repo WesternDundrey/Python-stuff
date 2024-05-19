@@ -108,7 +108,7 @@ def create_platforms(level):
         platform = Platform(x, y, width, height)
         platforms.add(platform)
     return platforms
-
+#yababababa
 def main():
     screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
     pygame.display.set_caption("Platformer Game")
