@@ -35,10 +35,10 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.Surface([PLAYER_WIDTH, PLAYER_HEIGHT])
         self.image.fill(PLAYER_COLOR)
         self.rect = self.image.get_rect()
-        # Start on a random platform
-        start_platform = random.choice(platforms.sprites())
-        self.rect.x = start_platform.rect.x + (start_platform.rect.width - PLAYER_WIDTH) // 2
-        self.rect.y = start_platform.rect.y - PLAYER_HEIGHT
+        # Find the leftmost platform
+        leftmost_platform = min(platforms, key=lambda p: p.rect.x)
+        self.rect.x = leftmost_platform.rect.x + (leftmost_platform.rect.width - PLAYER_WIDTH) // 2
+        self.rect.y = leftmost_platform.rect.y - PLAYER_HEIGHT
         self.change_y = 0
         self.change_x = 0
         self.jump_power = 10
@@ -72,6 +72,7 @@ class Player(pygame.sprite.Sprite):
 
     def stop(self):
         self.change_x = 0
+
 
 class Platform(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
