@@ -55,6 +55,11 @@ class Player(pygame.sprite.Sprite):
         if self.rect.right > SCREEN_WIDTH:
             self.rect.right = SCREEN_WIDTH
 
+        # Check if player hits the bottom of the screen
+        if self.rect.top >= SCREEN_HEIGHT:
+            return True  # Indicate game over
+        return False
+    
     def calc_gravity(self):
         if self.change_y == 0:
             self.change_y = 1
@@ -108,64 +113,89 @@ def main():
     screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
     pygame.display.set_caption("Platformer Game")
 
-    level = 1
-    platforms = create_platforms(level)
-    player = Player(platforms)
+    def reset_game():
+        nonlocal level, platforms, player, all_sprites, pole
+        level = 1
+        platforms = create_platforms(level)
+        player = Player(platforms)
+        all_sprites = pygame.sprite.Group()
+        all_sprites.add(player)
+        all_sprites.add(platforms)
+        pole = Pole(SCREEN_WIDTH - POLE_WIDTH, SCREEN_HEIGHT - POLE_HEIGHT - PLATFORM_HEIGHT, POLE_WIDTH, POLE_HEIGHT)
+        all_sprites.add(pole)
 
-    all_sprites = pygame.sprite.Group()
-    all_sprites.add(player)
-    all_sprites.add(platforms)
-
-    pole = Pole(SCREEN_WIDTH - POLE_WIDTH, SCREEN_HEIGHT - POLE_HEIGHT - PLATFORM_HEIGHT, POLE_WIDTH, POLE_HEIGHT)
-    all_sprites.add(pole)
-
+    reset_game()
     clock = pygame.time.Clock()
     running = True
+    game_over = False
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    player.jump()
-                if event.key == pygame.K_LEFT:
-                    player.move_left()
-                if event.key == pygame.K_RIGHT:
-                    player.move_right()
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_LEFT and player.change_x < 0:
-                    player.stop()
-                if event.key == pygame.K_RIGHT and player.change_x > 0:
-                    player.stop()
+            if game_over:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        game_over = False
+                        reset_game()
+                    if event.key == pygame.K_q:
+                        running = False
+            else:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        player.jump()
+                    if event.key == pygame.K_LEFT:
+                        player.move_left()
+                    if event.key == pygame.K_RIGHT:
+                        player.move_right()
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_LEFT and player.change_x < 0:
+                        player.stop()
+                    if event.key == pygame.K_RIGHT and player.change_x > 0:
+                        player.stop()
 
-        all_sprites.update()
+        if not game_over:
+            all_sprites.update()
 
-        # Check for collision with platforms
-        if pygame.sprite.spritecollide(player, platforms, False):
-            player.change_y = 0
-            player.rect.y = min([p.rect.top for p in platforms if player.rect.colliderect(p.rect)]) - PLAYER_HEIGHT
+            # Check if player hits the bottom of the screen
+            if player.update():
+                game_over = True
 
-        # Check if player reaches the right edge of the screen or the pole
-        if player.rect.right >= SCREEN_WIDTH or pygame.sprite.collide_rect(player, pole):
-            level += 1
-            player.jump_power += 1
-            platforms = create_platforms(level)
-            player = Player(platforms)
-            all_sprites = pygame.sprite.Group()
-            all_sprites.add(player)
-            all_sprites.add(platforms)
-            pole = Pole(SCREEN_WIDTH - POLE_WIDTH, SCREEN_HEIGHT - POLE_HEIGHT - PLATFORM_HEIGHT, POLE_WIDTH, POLE_HEIGHT)
-            all_sprites.add(pole)
+            # Check for collision with platforms
+            if pygame.sprite.spritecollide(player, platforms, False):
+                player.change_y = 0
+                player.rect.y = min([p.rect.top for p in platforms if player.rect.colliderect(p.rect)]) - PLAYER_HEIGHT
+
+            # Check if player reaches the right edge of the screen or the pole
+            if player.rect.right >= SCREEN_WIDTH or pygame.sprite.collide_rect(player, pole):
+                level += 1
+                player.jump_power += 1
+                platforms = create_platforms(level)
+                player = Player(platforms)
+                all_sprites = pygame.sprite.Group()
+                all_sprites.add(player)
+                all_sprites.add(platforms)
+                pole = Pole(SCREEN_WIDTH - POLE_WIDTH, SCREEN_HEIGHT - POLE_HEIGHT - PLATFORM_HEIGHT, POLE_WIDTH, POLE_HEIGHT)
+                all_sprites.add(pole)
 
         # Draw everything
         screen.fill(BLACK)
         all_sprites.draw(screen)
-        pygame.display.flip()
 
+        if game_over:
+            font = pygame.font.Font(None, 74)
+            text = font.render("Game Over", True, RED)
+            screen.blit(text, (SCREEN_WIDTH // 4, SCREEN_HEIGHT // 4))
+
+            font = pygame.font.Font(None, 36)
+            text = font.render("Press R to Replay or Q to Quit", True, WHITE)
+            screen.blit(text, (SCREEN_WIDTH // 4, SCREEN_HEIGHT // 2))
+
+        pygame.display.flip()
         clock.tick(60)
 
     pygame.quit()
 
 if __name__ == "__main__":
     main()
+
