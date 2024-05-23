@@ -84,7 +84,7 @@ while running:
                 enemies.remove(enemy)
                 create_enemy()
     
-    # Draw player
+    # Draw players
     pygame.draw.rect(screen, WHITE, (player_x, player_y, player_width, player_height))
     
     # Draw bullets
