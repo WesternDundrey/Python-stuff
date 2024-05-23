@@ -41,6 +41,10 @@ def create_enemy():
     enemy_y = random.randint(-500, -enemy_height)
     enemies.append(pygame.Rect(enemy_x, enemy_y, enemy_width, enemy_height))
 
+# Create initial row of enemies at the top
+for i in range(10):
+    create_enemy()
+
 # Main game loop
 running = True
 while running:
@@ -84,7 +88,7 @@ while running:
                 enemies.remove(enemy)
                 create_enemy()
     
-    # Draw players
+    # Draw player
     pygame.draw.rect(screen, WHITE, (player_x, player_y, player_width, player_height))
     
     # Draw bullets
