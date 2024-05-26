@@ -9,7 +9,7 @@ font_size = 40
 
 hangman_images = [pygame.image.load(f"hangman{i}.png") for i in range(7)]
 font = pygame.front.Sysfont('arial', font_size)
-
+guessed = input("Guess a letter!")
 def draw():
     window.fill(white)
     display_word = ""
@@ -23,3 +23,16 @@ def draw():
     window.blit(hangman_images,[hangman_status], (150,100))
     pygame.display.update()
 
+def handle_input():
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            quit()
+        if event.type == pygame.KEYDOWN:
+            if event.key >= pygame.K_a and event.key <= pygame.K_z:
+                guessed_letter = chr(event.key)
+                if guessed_letter not in guessed:
+                    guessed.append(guessed_letter)
+                    if guessed_letter not in word:
+                        global hangman_status
+                        hangman_status += 1
