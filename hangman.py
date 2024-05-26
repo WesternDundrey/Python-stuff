@@ -1,4 +1,7 @@
 import pygame
+import random
+
+word_list = ["PYTHON", "DEVELOPER", "PROGRAMMING", "HANGMAN", "PYGAME", "COMPUTER", "SCIENCE", "ALGORITHM", "FUNCTION", "VARIABLE"]
 pygame.init()
 window = pygame.display.set_mode(width=800, height=600)
 pygame.display.set_caption("Hangman")
@@ -9,7 +12,12 @@ font_size = 40
 
 hangman_images = [pygame.image.load(f"hangman{i}.png") for i in range(7)]
 font = pygame.front.Sysfont('arial', font_size)
-guessed = input("Guess a letter!")
+
+hangman_status = 0
+guessed = []
+word = random.choice(word_list).upper()
+
+
 def draw():
     window.fill(white)
     display_word = ""
@@ -36,3 +44,14 @@ def handle_input():
                     if guessed_letter not in word:
                         global hangman_status
                         hangman_status += 1
+run = True
+while run:
+    draw()
+    handle_input()
+    if set(word).issubset(set(guessed)):
+        print("you won!")
+        run = False
+    if hangman_status == 6:
+        print("You lost! The word was:", word)
+        run = False
+    pygame.time.delay(100)
