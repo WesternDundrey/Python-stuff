@@ -14,6 +14,7 @@ hangman_images = [pygame.image.load(f"hangman{i}.png") for i in range(7)]
 font = pygame.front.Sysfont('arial', font_size)
 
 hangman_status = 0
+print(hangman_status)
 guessed = []
 word = random.choice(word_list).upper()
 
